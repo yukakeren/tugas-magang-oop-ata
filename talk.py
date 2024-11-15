@@ -1,32 +1,36 @@
-import numpy as np
+from interpolation import interpolate_np, interpolate
+import serial 
+import time
 
-def interpolate(angle):
-    # Pastikan sudut berada di dalam range
-    if angle < -150.0: angle = -150.0
-    elif angle > 150.0: angle = 150.0
-    # Persamaan interpolasi linear dari range
-    # [-150, 150] ke [0, 1023]
-    digital_unit = (angle + 180) * 1023 / 360
-    # Kembalikan nilai sebagai integer
-    return int(digital_unit)
+def send_serial(data_str):
+    # Sesuaikan parameter berikut
+    port='COM5'
 
-def interpolate_np(angles):
-    angle_range=(-150.0, 150.0)
-    digital_range=(0, 1023)
-    digital_units = np.interp(angles,
-    angle_range, digital_range)
-    return digital_units.astype(int)
+    baudrate=9600
+    # Buka Serial port
+    with serial.Serial(port, baudrate) as ser:
+        # Kirim data
+        while(True):
+            ser.write(data_str.encode())
+            time.sleep(1)
 
 def main():
-    # Sudut dalam derajat
-    angles = [100.0, -90.0, 73.34]
-    # Nilai digital dari sudut
-    digital_units = [interpolate(angle) for angle in angles]
-    # Tampilkan nilai sebelum dan setelah interpolasi
-    print(f'Sudut: {angles}')
-    print(f'Nilai: {digital_units}')
-    digital_units_np = interpolate_np(angles)
-    print(f'Nilai Numpy: {digital_units}')
+    while True:
 
-if __name__ == '__main__':
+        angle1 = float(input("Masukkan Sudut 1 (dalam derajat): "))
+        angle2 = float(input("Masukkan Sudut 2 (dalam derajat): "))
+
+        angles = [angle1, angle2]
+
+        digital_units = interpolate_np(angles)
+        encoded_str = ' '.join(digital_units.astype(str))
+
+        # Kirim data
+        print(encoded_str)
+        send_serial(encoded_str)
+ 
+        formatted_units = ' '.join(f'{value:04d}' for value in digital_units)
+        send_serial(formatted_units)
+
+if __name__ == '__main__': 
     main()
